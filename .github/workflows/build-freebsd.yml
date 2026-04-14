@@ -1,0 +1,63 @@
+name: build-freebsd
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-freebsd-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-freebsd:
+    runs-on: ubuntu-latest
+    env:
+      BINARY_NAME: sub2api-freebsd-amd64
+      VERSION: ${{ github.ref_type == 'tag' && github.ref_name || github.sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: backend/go.mod
+          check-latest: false
+          cache-dependency-path: backend/go.sum
+
+      - name: Build FreeBSD binary
+        shell: bash
+        run: |
+          chmod +x scripts/package-freebsd.sh
+          VERSION="${VERSION}" OUTPUT_NAME="${BINARY_NAME}" ./scripts/package-freebsd.sh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.BINARY_NAME }}
+          path: dist/${{ env.BINARY_NAME }}
+          if-no-files-found: error
+
+      - name: Attach binary to tag release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: dist/${{ env.BINARY_NAME }}

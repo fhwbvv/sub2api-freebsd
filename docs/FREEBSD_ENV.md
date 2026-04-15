@@ -44,6 +44,36 @@ The binary does not read `.env` automatically. Load the environment into the cur
 set -a && source ./.env && set +a && ./sub2api-freebsd-amd64
 ```
 
+If you rename the binary to `sub2api`, use:
+
+```bash
+set -a && source ./.env && set +a && ./sub2api
+```
+
+## `start.sh`
+
+This repository also includes a generic `start.sh` helper script for FreeBSD environments with `screen`.
+
+It automatically:
+
+- uses the directory where `start.sh` is located as `APP_DIR`
+- loads `.env`
+- starts the app inside a detached `screen` session
+- writes output to `start.log`
+
+Usage:
+
+```bash
+chmod +x ./start.sh
+./start.sh
+```
+
+Optional overrides:
+
+```bash
+APP_DIR=/your/app/path APP_NAME=sub2api SESSION_NAME=sub2api ./start.sh
+```
+
 ## Notes
 
 - `AUTO_SETUP=true` enables first-run initialization from environment variables.

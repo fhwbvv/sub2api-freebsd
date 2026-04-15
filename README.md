@@ -244,6 +244,21 @@ The binary does not load `.env` automatically. Import it into the shell first, t
 set -a && source ./.env && set +a && ./sub2api-freebsd-amd64
 ```
 
+If you rename the binary to `sub2api`, use:
+
+```bash
+set -a && source ./.env && set +a && ./sub2api
+```
+
+#### Helper Script
+
+This repository also includes a generic `start.sh` for `screen`-based startup. It uses the script directory as the app directory by default, so you do not need to hardcode your current deployment path.
+
+```bash
+chmod +x ./start.sh
+./start.sh
+```
+
 ### Method 2: Docker Compose (Recommended)
 
 Deploy with Docker Compose, including PostgreSQL and Redis containers.

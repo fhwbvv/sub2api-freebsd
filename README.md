@@ -196,6 +196,54 @@ curl -sSL https://raw.githubusercontent.com/Wei-Shaw/sub2api/main/deploy/install
 
 ---
 
+### Method 1.5: FreeBSD Binary with Environment Variables
+
+If you use the FreeBSD-only fork from `fhwbvv/sub2api-freebsd`, you can run the binary directly with environment variables instead of Docker Compose.
+
+See also: `docs/FREEBSD_ENV.md`
+
+#### Example `.env`
+
+```dotenv
+AUTO_SETUP=true
+
+SERVER_HOST=127.0.0.1
+SERVER_PORT=38708
+SERVER_MODE=release
+RUN_MODE=simple
+TZ=Asia/Shanghai
+GIN_MODE=release
+
+SETUP_MIGRATION_TIMEOUT_SECONDS=1800
+
+DATABASE_HOST=127.0.0.1
+DATABASE_PORT=5432
+DATABASE_USER=your_pg_user
+DATABASE_PASSWORD=your_pg_password
+DATABASE_DBNAME=sub2api
+DATABASE_SSLMODE=disable
+
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_DB=0
+REDIS_ENABLE_TLS=false
+
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=your_admin_password
+
+JWT_SECRET=replace-with-a-long-random-secret
+JWT_EXPIRE_HOUR=24
+```
+
+#### Start Command
+
+The binary does not load `.env` automatically. Import it into the shell first, then start the program:
+
+```bash
+set -a && source ./.env && set +a && ./sub2api-freebsd-amd64
+```
+
 ### Method 2: Docker Compose (Recommended)
 
 Deploy with Docker Compose, including PostgreSQL and Redis containers.

@@ -20,7 +20,7 @@ cd "${BACKEND_DIR}"
 printf '%s\n' "${VERSION#v}" > cmd/server/VERSION
 mkdir -p "${DIST_DIR}"
 CGO_ENABLED=0 GOOS=freebsd GOARCH=amd64 \
-  go build -ldflags="-s -w -X main.Version=${VERSION#v}" -trimpath \
+  go build -tags embed -ldflags="-s -w -X main.Version=${VERSION#v}" -trimpath \
   -o "${DIST_DIR}/${OUTPUT_NAME}" ./cmd/server
 
 echo "[3/3] Build complete"

@@ -345,7 +345,11 @@ func initializeDatabase(cfg *SetupConfig) error {
 		}
 	}()
 
-	migrationCtx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	migrationTimeoutSeconds := getEnvIntOrDefault("SETUP_MIGRATION_TIMEOUT_SECONDS", 600)
+	if migrationTimeoutSeconds <= 0 {
+		migrationTimeoutSeconds = 600
+	}
+	migrationCtx, cancel := context.WithTimeout(context.Background(), time.Duration(migrationTimeoutSeconds)*time.Second)
 	defer cancel()
 	return repository.ApplyMigrations(migrationCtx, db)
 }

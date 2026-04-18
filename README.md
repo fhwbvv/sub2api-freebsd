@@ -91,6 +91,11 @@ Sub2API is an AI API gateway platform designed to distribute and manage API quot
 <td>Thanks to AIGoCode for sponsoring this project! AIGoCode is an all-in-one platform that integrates Claude Code, Codex, and the latest Gemini models, providing you with stable, efficient, and highly cost-effective AI coding services. The platform offers flexible subscription plans, zero risk of account suspension, direct access with no VPN required, and lightning-fast responses. AIGoCode has prepared a special benefit for sub2api users: if you register via <a href="https://aigocode.com/invite/SUB2API">this link</a>, you'll receive an extra 10% bonus credit on your first top-up!</td>
 </tr>
 
+<tr>
+<td width="180"><a href="https://shop.bmoplus.com/?utm_source=github"><img src="assets/partners/logos/bmoplus.jpg" alt="bmoplus" width="150"></a></td>
+<td>Huge thanks to BmoPlus for sponsoring this project! BmoPlus is a highly reliable AI account provider built strictly for heavy AI users and developers. They offer rock-solid, ready-to-use accounts and official top-up services for ChatGPT Plus / ChatGPT Pro (Full Warranty) / Claude Pro / Super Grok / Gemini Pro. By registering and ordering through <a href="https://shop.bmoplus.com/?utm_source=github">BmoPlus - Premium AI Accounts & Top-ups</a>, users can unlock the mind-blowing rate of 10% of the official GPT subscription price (90% OFF)</td>
+</tr>
+
 </table>
 
 ## Ecosystem
@@ -195,69 +200,6 @@ curl -sSL https://raw.githubusercontent.com/Wei-Shaw/sub2api/main/deploy/install
 ```
 
 ---
-
-### Method 1.5: FreeBSD Binary with Environment Variables
-
-If you use the FreeBSD-only fork from `fhwbvv/sub2api-freebsd`, you can run the binary directly with environment variables instead of Docker Compose.
-
-See also: `docs/FREEBSD_ENV.md`
-
-#### Example `.env`
-
-```dotenv
-AUTO_SETUP=true
-
-SERVER_HOST=127.0.0.1
-SERVER_PORT=38708
-SERVER_MODE=release
-RUN_MODE=simple
-TZ=Asia/Shanghai
-GIN_MODE=release
-
-SETUP_MIGRATION_TIMEOUT_SECONDS=1800
-
-DATABASE_HOST=127.0.0.1
-DATABASE_PORT=5432
-DATABASE_USER=your_pg_user
-DATABASE_PASSWORD=your_pg_password
-DATABASE_DBNAME=sub2api
-DATABASE_SSLMODE=disable
-
-REDIS_HOST=127.0.0.1
-REDIS_PORT=6379
-REDIS_PASSWORD=
-REDIS_DB=0
-REDIS_ENABLE_TLS=false
-
-ADMIN_EMAIL=admin@example.com
-ADMIN_PASSWORD=your_admin_password
-
-JWT_SECRET=replace-with-a-long-random-secret
-JWT_EXPIRE_HOUR=24
-```
-
-#### Start Command
-
-The binary does not load `.env` automatically. Import it into the shell first, then start the program:
-
-```bash
-set -a && source ./.env && set +a && ./sub2api-freebsd-amd64
-```
-
-If you rename the binary to `sub2api`, use:
-
-```bash
-set -a && source ./.env && set +a && ./sub2api
-```
-
-#### Helper Script
-
-This repository also includes a generic `start.sh` for `screen`-based startup. It uses the script directory as the app directory by default, so you do not need to hardcode your current deployment path.
-
-```bash
-chmod +x ./start.sh
-./start.sh
-```
 
 ### Method 2: Docker Compose (Recommended)
 

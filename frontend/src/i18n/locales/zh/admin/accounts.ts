@@ -349,14 +349,13 @@ export default {
           },
         },
         balance: '余额 --',
-        window5h: '5 小时窗口',
-        windowWeekly: '每周窗口',
+        window5h: '5h',
+        windowWeekly: '7d',
         probe: '查询',
         probeTooltip: '请求供应商额度端点，查询 5 小时 / 每周滚动窗口用量',
         balanceProbeTooltip: '请求供应商余额端点，查询账户余额',
         balanceLow: '余额不足',
         noBalanceEndpoint: '该平台暂无余额查询接口',
-        resetSoon: '即将重置',
       },
       types: {
         oauth: 'OAuth',
@@ -645,6 +644,14 @@ export default {
       apiKeyRequired: 'API Key *',
       apiKeyPlaceholder: 'sk-ant-api03-...',
       apiKeyHint: '您的 Claude Console API Key',
+      upstreamRequestIdHeader: '上游ID',
+      upstreamRequestIdHeaderPlaceholder: '留空不记录',
+      upstreamRequestIdHeaderHelp: {
+        intro: '填写直接上游在响应头中声明请求标识的头名，记录到用量明细的“上游ID”列；留空则不记录。',
+        examplesTitle: '常见取值',
+        sub2apiNote: '对应对方用量明细的请求ID列',
+        official: '{platform} 官方 API'
+      },
       // OpenAI specific hints
       openai: {
         baseUrlHint: '留空使用官方 OpenAI API',
@@ -1015,6 +1022,7 @@ export default {
       billingRateMultiplierHint: '0 表示不计费，仅影响账号计费',
       expiresAt: '过期时间',
       expiresAtHint: '留空表示不过期',
+      expiresAtTimezoneHint: '输入按浏览器本地时区（{timezone}）解释。',
       higherPriorityFirst: '数值越小优先级越高',
       mixedScheduling: '在 /v1/messages 中使用',
       mixedSchedulingHint: '启用后可参与 Anthropic/Gemini 分组的调度',

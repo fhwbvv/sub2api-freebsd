@@ -146,14 +146,13 @@ export default {
           },
         },
         balance: 'Balance --',
-        window5h: '5-hour window',
-        windowWeekly: 'Weekly window',
+        window5h: '5h',
+        windowWeekly: '7d',
         probe: 'Query',
         probeTooltip: 'Query the provider quota endpoint for 5-hour / weekly rolling window usage',
         balanceProbeTooltip: 'Query the provider balance endpoint for the account balance',
         balanceLow: 'Insufficient balance',
         noBalanceEndpoint: 'This platform has no balance query endpoint',
-        resetSoon: 'reset soon',
       },
       types: {
         oauth: 'OAuth',
@@ -560,6 +559,14 @@ export default {
       apiKeyRequired: 'API Key *',
       apiKeyPlaceholder: 'sk-ant-api03-...',
       apiKeyHint: 'Your Claude Console API Key',
+      upstreamRequestIdHeader: 'Upstream ID',
+      upstreamRequestIdHeaderPlaceholder: 'Leave empty to record nothing',
+      upstreamRequestIdHeaderHelp: {
+        intro: 'Name of the response header in which the direct upstream declares its request ID. The value is recorded in the "Upstream ID" column of the usage log; leave empty to record nothing.',
+        examplesTitle: 'Common values',
+        sub2apiNote: 'Matches the request ID column of its usage log',
+        official: '{platform} official API'
+      },
       // OpenAI specific hints
       openai: {
         baseUrlHint: 'Leave default for official OpenAI API',
@@ -944,6 +951,7 @@ export default {
       billingRateMultiplierHint: '0 = free, affects account billing only',
       expiresAt: 'Expires At',
       expiresAtHint: 'Leave empty for no expiration',
+      expiresAtTimezoneHint: 'Input is interpreted in your browser time zone ({timezone}).',
       higherPriorityFirst: 'Lower value means higher priority',
       mixedScheduling: 'Use in /v1/messages',
       mixedSchedulingHint: 'Enable to participate in Anthropic/Gemini group scheduling',

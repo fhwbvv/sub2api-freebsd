@@ -93,6 +93,83 @@ func TestBuildCodexModelsManifestForGroupUsesNoneForExplicitNonReasoningMetadata
 	require.Equal(t, []string{"none"}, effortsFromManifestModel(t, models[0]))
 }
 
+func TestBuildCodexModelsManifestForGroupAdvertisesSearchOnlyForChatBridgeRoutes(t *testing.T) {
+	t.Parallel()
+
+	newAccount := func(id int64, nativeResponses bool) Account {
+		return Account{
+			ID: id, Platform: PlatformOpenAI, Type: AccountTypeAPIKey,
+			Credentials: map[string]any{
+				"base_url":      "https://provider.example/v1",
+				"model_mapping": map[string]any{"company-coding-model": "company-coding-model"},
+			},
+			Extra: map[string]any{"openai_responses_supported": nativeResponses},
+		}
+	}
+
+	for _, tc := range []struct {
+		name     string
+		accounts []Account
+		want     bool
+	}{
+		{name: "chat bridge", accounts: []Account{newAccount(80, false)}, want: true},
+		{name: "native responses", accounts: []Account{newAccount(81, true)}, want: false},
+		{name: "mixed routes", accounts: []Account{newAccount(82, false), newAccount(83, true)}, want: false},
+	} {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			body, err := buildCodexModelsManifestForAccounts(
+				PlatformOpenAI, []string{"company-coding-model"}, tc.accounts, nil, true,
+			)
+			require.NoError(t, err)
+			models := decodeCodexManifestModels(t, body)
+			require.Len(t, models, 1)
+			require.Equal(t, tc.want, models[0]["supports_search_tool"])
+		})
+	}
+}
+
+func TestCompleteAPIKeyCodexManifestSearchCapabilityPreservesUpstreamAndFailsClosed(t *testing.T) {
+	t.Parallel()
+
+	nativeAccount := &Account{
+		Platform: PlatformOpenAI,
+		Type:     AccountTypeAPIKey,
+		Credentials: map[string]any{
+			"base_url": "https://provider.example/v1",
+		},
+		Extra: map[string]any{"openai_responses_supported": true},
+	}
+	body, err := completeAPIKeyCodexModelsManifestMetadata([]byte(`{"models":[
+		{"slug":"explicit","supports_search_tool":true},
+		{"slug":"missing"}
+	]}`), true, nativeAccount)
+	require.NoError(t, err)
+	models := decodeCodexManifestModels(t, body)
+	require.Equal(t, true, models[0]["supports_search_tool"])
+	require.Equal(t, false, models[1]["supports_search_tool"])
+
+	chatAccount := &Account{
+		Platform: PlatformOpenAI,
+		Type:     AccountTypeAPIKey,
+		Credentials: map[string]any{
+			"base_url": "https://provider.example/v1",
+		},
+		Extra: map[string]any{"openai_responses_supported": false},
+	}
+	body, err = completeAPIKeyCodexModelsManifestMetadata(
+		[]byte(`{"models":[
+			{"slug":"explicit-disabled","supports_search_tool":false},
+			{"slug":"generated"}
+		]}`), true, chatAccount,
+	)
+	require.NoError(t, err)
+	models = decodeCodexManifestModels(t, body)
+	require.Equal(t, false, models[0]["supports_search_tool"])
+	require.Equal(t, true, models[1]["supports_search_tool"])
+}
+
 // Scenario: multiple schedulable accounts advertise only their shared capabilities.
 func TestBuildCodexModelsManifestForGroupIntersectsSyncedAccountMetadata(t *testing.T) {
 	t.Parallel()
@@ -198,8 +275,9 @@ func TestBuildCodexModelsManifestForGroupIntersectsDifferentMappedTargetsWithout
 	}
 }
 
-// Scenario: temporarily unschedulable mapped accounts still participate in capability intersection.
-func TestBuildCodexModelsManifestForGroupIntersectsUnschedulableMappedAccounts(t *testing.T) {
+// Scenario: accounts that leave the current scheduling pool only because of
+// transient state still participate in capability intersection.
+func TestBuildCodexModelsManifestForGroupIntersectsTransientlyUnschedulableMappedAccounts(t *testing.T) {
 	t.Parallel()
 
 	const groupID int64 = 741
@@ -213,19 +291,19 @@ func TestBuildCodexModelsManifestForGroupIntersectsUnschedulableMappedAccounts(t
 		true,
 		nil,
 	)
-	unschedulable := newCodexCatalogMappedAccount(
+	transientlyUnschedulable := newCodexCatalogMappedAccount(
 		42,
 		"glm-5.3",
 		"GLM 5.3",
 		[]string{"low", "medium", "high"},
 		[]string{"text"},
 		272_000,
-		false,
+		true,
 		map[string]any{"exclusive-model": "exclusive-upstream"},
 	)
 	svc := &GatewayService{accountRepo: splitCodexModelsAccountRepo{
 		schedulable: map[int64][]Account{groupID: {schedulable}},
-		catalog:     map[int64][]Account{groupID: {schedulable, unschedulable}},
+		catalog:     map[int64][]Account{groupID: {schedulable, transientlyUnschedulable}},
 	}}
 
 	body, err := svc.BuildCodexModelsManifestForGroup(
@@ -241,8 +319,8 @@ func TestBuildCodexModelsManifestForGroupIntersectsUnschedulableMappedAccounts(t
 	require.EqualValues(t, 272_000, models[0]["context_window"])
 }
 
-// Scenario: deleting an account can widen the advertised contract.
-func TestBuildCodexModelsManifestForGroupWidensAfterUnschedulableAccountIsRemoved(t *testing.T) {
+// Scenario: a persistently disabled account cannot narrow the advertised contract.
+func TestBuildCodexModelsManifestForGroupIgnoresPersistentlyDisabledMappedAccounts(t *testing.T) {
 	t.Parallel()
 
 	const groupID int64 = 742
@@ -256,9 +334,20 @@ func TestBuildCodexModelsManifestForGroupWidensAfterUnschedulableAccountIsRemove
 		true,
 		nil,
 	)
+	disabled := newCodexCatalogMappedAccount(
+		42,
+		"glm-5.3",
+		"GLM 5.3",
+		[]string{"low", "medium", "high"},
+		[]string{"text"},
+		272_000,
+		false,
+		nil,
+	)
 	svc := &GatewayService{accountRepo: splitCodexModelsAccountRepo{
 		schedulable: map[int64][]Account{groupID: {remaining}},
 		catalog:     map[int64][]Account{groupID: {remaining}},
+		all:         map[int64][]Account{groupID: {remaining, disabled}},
 	}}
 
 	body, err := svc.BuildCodexModelsManifestForGroup(
@@ -271,7 +360,7 @@ func TestBuildCodexModelsManifestForGroupWidensAfterUnschedulableAccountIsRemove
 	require.EqualValues(t, 1_000_000, models[0]["context_window"])
 }
 
-func TestBuildCodexModelsManifestForGroupFallsBackToSchedulableWhenListByGroupFails(t *testing.T) {
+func TestBuildCodexModelsManifestForGroupFallsBackToSchedulableWhenAvailabilityLookupFails(t *testing.T) {
 	t.Parallel()
 
 	const groupID int64 = 743
@@ -286,7 +375,7 @@ func TestBuildCodexModelsManifestForGroupFallsBackToSchedulableWhenListByGroupFa
 			true,
 			nil,
 		)},
-		listByGroupErr: errors.New("group listing unavailable"),
+		availabilityErr: errors.New("group listing unavailable"),
 	}
 	svc := &GatewayService{accountRepo: repo}
 
